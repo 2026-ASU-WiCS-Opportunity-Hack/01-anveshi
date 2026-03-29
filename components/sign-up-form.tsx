@@ -21,7 +21,6 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
-  const [role, setRole] = useState('staff') // Default role is "staff"
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -38,37 +37,15 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
       return
     }
 
-    // Suggested by ChatGPT####################################################
     try {
-      // Create the login account in Supabase Auth
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/protected`,
         },
       })
-
-      if (signUpError) {
-        throw signUpError
-      }
-
-      // Create a matching row in your profiles table
-      // Every new user starts as "staff"
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').upsert([
-          {
-            id: data.user.id,
-            email: data.user.email,
-            role: 'Staff',
-          },
-        ])
-
-        if (profileError) {
-          throw profileError
-        }
-      }
-      // End of ChatGPT suggestion################################################
+      if (error) throw error
       router.push('/auth/sign-up-success')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -120,18 +97,6 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   required
                   value={repeatPassword}
                   onChange={(e) => setRepeatPassword(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="role">Role(Staff or Admin)</Label>
-                </div>
-                <Input
-                  id="role"
-                  type="text"
-                  required
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
